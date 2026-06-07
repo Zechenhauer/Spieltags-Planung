@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kaderplaner - Scherpenberger Pimmelprinzen</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --panel-bg: #111827;
+            --text-color: #e2e8f0;
+            --text-muted: #94a3b8;
+            --primary: #38bdf8;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 30px 15px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .app-container {
+            width: 100%;
+            max-width: 500px;
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 25px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4);
+            box-sizing: border-box;
+            position: relative;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        .header h1 {
+            color: #f8fafc;
+            font-size: 28px;
+            margin: 0 0 5px 0;
+            font-weight: 700;
+            letter-spacing: -0.025em;
+        }
+
+        .header p {
+            color: var(--text-muted);
+            margin: 0;
+            font-size: 14px;
+        }
+
+        .date-section {
+            background: var(--panel-bg);
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border: 1px solid #334155;
+        }
+
+        .date-section label {
+            font-weight: 600;
+            font-size: 14px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .date-section input[type="date"] {
+            background: #1f2937;
+            border: 2px solid #334155;
+            color: #f8fafc;
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: inherit;
+            outline: none;
+            cursor: pointer;
+        }
+
+        .stats-container {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 25px;
+        }
+
+        .stat-box {
+            flex: 1;
+            background: var(--panel-bg);
+            padding: 12px;
+            border-radius: 12px;
+            text-align: center;
+            border: 1px solid #334155;
+        }
+
+        .stat-box .num {
+            font-size: 24px;
+            font-weight: 700;
+            display: block;
+        }
+
+        .stat-box .lbl {
+            font-size: 11px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            font-weight: 600;
+            letter-spacing: 0.05em;
+        }
+
+        .stat-ja .num { color: #66bb6a; }
+        .stat-nein .num { color: #ef5350; }
+        .stat-offen .num { color: #ffa726; }
+
+        .player-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .player-card {
+            background: var(--panel-bg);
+            padding: 14px 16px;
+            border-radius: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 1px solid #334155;
+            transition: all 0.2s;
+        }
+
+        .player-card.status-ja { border-color: rgba(102, 187, 106, 0.4); background: rgba(102, 187, 106, 0.02); }
+        .player-card.status-nein { border-color: rgba(239, 83, 80, 0.4); background: rgba(239, 83, 80, 0.02); }
+        .player-card.status-unsicher { border-color: rgba(255, 167, 38, 0.4); background: rgba(255, 167, 38, 0.02); }
+
+        .p-badge {
+            padding: 6px 14px;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 15px;
+            white-space: nowrap;
+            display: inline-block;
+        }
+        
+        .p-MetalBoller { background-color: rgba(2, 136, 209, 0.15); color: #29b6f6; border: 1px solid #0288d1; }
+        .p-Daszebra { background-color: rgba(123, 31, 162, 0.15); color: #ba68c8; border: 1px solid #7b1fa2; }
+        .p-Günni { background-color: rgba(56, 142, 60, 0.15); color: #66bb6a; border: 1px solid #388e3c; }
+        .p-HerrProfessor { background-color: rgba(245, 124, 0, 0.15); color: #ffa726; border: 1px solid #f57c00; }
+        .p-Pepe { background-color: rgba(211, 47, 47, 0.15); color: #ef5350; border: 1px solid #d32f2f; }
+        .p-Libero { background-color: rgba(0, 121, 107, 0.15); color: #26a69a; border: 1px solid #00796b; }
+        .p-Illie { background-color: rgba(113, 113, 113, 0.15); color: #cfd8dc; border: 1px solid #757575; }
+
+        .player-status-text {
+            font-size: 11px;
+            color: var(--text-muted);
+            display: block;
+            margin-top: 5px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .btn-group { display: flex; gap: 6px; }
+        .btn-group button {
+            width: 38px;
+            height: 38px;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 15px;
+            transition: all 0.15s;
+            background: #1f2937;
+            color: var(--text-muted);
+        }
+
+        .btn-group button.active-ja { background-color: #2e7d32; color: white; border-color: #388e3c; }
+        .btn-group button.active-unsicher { background-color: #f57c00; color: white; border-color: #ffa726; }
+        .btn-group button.active-nein { background-color: #c62828; color: white; border-color: #ef5350; }
+
+        .export-btn {
+            width: 100%; background-color: #25D366; color: white; border: none; padding: 14px;
+            border-radius: 12px; font-weight: 600; font-size: 15px; margin-top: 25px;
+            cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; font-family: inherit;
+        }
+
+        /* Lade-Anzeige Overlay */
+        .loading-overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(15, 23, 42, 0.7); border-radius: 16px;
+            display: flex; justify-content: center; align-items: center;
+            font-weight: 600; color: var(--primary); font-size: 18px;
+            z-index: 10; display: none;
+        }
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+    <div id="loading" class="loading-overlay">⏳ Synchronisiere Daten...</div>
+
+    <div class="header">
+        <h1>👑 Pimmelprinzen</h1>
+        <p>Dart Club Scherpenberg &bull; Kaderplaner</p>
+    </div>
+
+    <div class="date-section">
+        <label for="spiel-datum">Spieltag</label>
+        <input type="date" id="spiel-datum">
+    </div>
+
+    <div class="stats-container">
+        <div class="stat-box stat-ja"><span class="num" id="count-ja">0</span><span class="lbl">Dabei</span></div>
+        <div class="stat-box stat-nein"><span class="num" id="count-nein">0</span><span class="lbl">Raus</span></div>
+        <div class="stat-box stat-offen"><span class="num" id="count-offen">0</span><span class="lbl">Offen</span></div>
+    </div>
+
+    <div class="player-list" id="player-list"></div>
+
+    <button class="export-btn" onclick="exportToWhatsApp()">📋 Liste für WhatsApp kopieren</button>
+</div>
+
+<script>
+    // Deine aktive Google Apps Script URL ist hier fest hinterlegt
+    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwNyDqSmLlQDNlZfoAa_xw-L4UikXEAVDQwA7c5xs7qKQ53Kjw3pCO6LXG7lpYB2THyKA/exec";
+
+    const kader = ["MetalBoller", "Daszebra", "Günni", "HerrProfessor", "Pepe", "Libero", "Illie"];
+    let datenbank = {};
+    const datumsInput = document.getElementById('spiel-datum');
+
+    function getNextThursday() {
+        const today = new Date();
+        const resultDate = new Date(today.getTime());
+        const dayOfWeek = today.getDay();
+        let daysUntilThursday = (4 - dayOfWeek + 7) % 7;
+        resultDate.setDate(today.getDate() + daysUntilThursday);
+        return resultDate.toISOString().split('T')[0];
+    }
+
+    datumsInput.value = getNextThursday();
+    datumsInput.addEventListener('change', render);
+
+    // Daten von Google Sheets laden
+    function loadDataFromSheets() {
+        showLoading(true);
+        fetch(WEB_APP_URL)
+            .then(response => response.json())
+            .then(data => {
+                datenbank = data;
+                render();
+                showLoading(false);
+            })
+            .catch(err => {
+                console.error("Fehler beim Laden:", err);
+                showLoading(false);
+            });
+    }
+
+    function showLoading(show) {
+        document.getElementById('loading').style.display = show ? 'flex' : 'none';
+    }
+
+    function render() {
+        const gewähltesDatum = datumsInput.value;
+        const listContainer = document.getElementById('player-list');
+        listContainer.innerHTML = '';
+
+        if (!datenbank[gewähltesDatum]) {
+            datenbank[gewähltesDatum] = {};
+        }
+
+        let countJa = 0, countNein = 0, countOffen = 0;
+
+        kader.forEach(spieler => {
+            const status = datenbank[gewähltesDatum][spieler] || 'offen';
+            
+            if (status === 'ja') countJa++;
+            else if (status === 'nein') countNein++;
+            else countOffen++;
+
+            let statusText = "noch offen";
+            if(status === 'ja') statusText = "🟢 Am Board";
+            if(status === 'nein') statusText = "🔴 Abgemeldet";
+            if(status === 'unsicher') statusText = "🟡 Unsicher";
+
+            const card = document.createElement('div');
+            card.className = `player-card status-${status}`;
+            card.innerHTML = `
+                <div>
+                    <span class="p-badge p-${spieler}">${spieler}</span>
+                    <span class="player-status-text">${statusText}</span>
+                </div>
+                <div class="btn-group">
+                    <button class="${status === 'ja' ? 'active-ja' : ''}" onclick="setStatus('${spieler}', 'ja')">✓</button>
+                    <button class="${status === 'unsicher' ? 'active-unsicher' : ''}" onclick="setStatus('${spieler}', 'unsicher')">?</button>
+                    <button class="${status === 'nein' ? 'active-nein' : ''}" onclick="setStatus('${spieler}', 'nein')">✗</button>
+                </div>
+            `;
+            listContainer.appendChild(card);
+        });
+
+        document.getElementById('count-ja').innerText = countJa;
+        document.getElementById('count-nein').innerText = countNein;
+        document.getElementById('count-offen').innerText = countOffen;
+    }
+
+    function setStatus(spielerName, statusWert) {
+        const gewähltesDatum = datumsInput.value;
+        let neuerStatus = statusWert;
+        
+        if (datenbank[gewähltesDatum] && datenbank[gewähltesDatum][spielerName] === statusWert) {
+            neuerStatus = 'offen';
+        }
+
+        showLoading(true);
+
+        // An Google Sheets senden
+        fetch(WEB_APP_URL, {
+            method: "POST",
+            mode: "no-cors",
+            cache: "no-cache",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                datum: gewähltesDatum,
+                spieler: spielerName,
+                status: neuerStatus
+            })
+        }).then(() => {
+            if (!datenbank[gewähltesDatum]) datenbank[gewähltesDatum] = {};
+            datenbank[gewähltesDatum][spielerName] = neuerStatus;
+            render();
+            showLoading(false);
+        }).catch(err => {
+            alert("Fehler beim Speichern!");
+            showLoading(false);
+        });
+    }
+
+    function exportToWhatsApp() {
+        const gewähltesDatum = datumsInput.value;
+        const d = gewähltesDatum.split('-');
+        const formatiertesDatum = `${d[2]}.${d[1]}.${d[0]}`;
+
+        let text = `🎯 *Kader Pimmelprinzen (${formatiertesDatum})*\n\n`;
+        let jaListe = [], neinListe = [], offenListe = [];
+
+        kader.forEach(spieler => {
+            const status = datenbank[gewähltesDatum][spieler] || 'offen';
+            if(status === 'ja') jaListe.push(`🟢 ${spieler}`);
+            else if(status === 'nein') neinListe.push(`🔴 ${spieler}`);
+            else if(status === 'unsicher') offenListe.push(`🟡 ${spieler} (unsicher)`);
+            else offenListe.push(`⚪ ${spieler}`);
+        });
+
+        text += `*Zusagen (${jaListe.length}):*\n${jaListe.length ? jaListe.join('\n') : 'Keine'}\n\n`;
+        text += `*Absagen (${neinListe.length}):*\n${neinListe.length ? neinListe.join('\n') : 'Keine'}\n\n`;
+        text += `*Offen (${offenListe.length}):*\n${offenListe.length ? offenListe.join('\n') : 'Keine'}`;
+
+        navigator.clipboard.writeText(text).then(() => {
+            alert("In Zwischenablage kopiert!");
+        });
+    }
+
+    loadDataFromSheets();
+</script>
+</body>
+</html>
