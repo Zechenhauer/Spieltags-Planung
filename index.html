@@ -38,7 +38,7 @@
 
         .header {
             text-align: center;
-            margin-bottom: 25px;
+            margin-bottom: 20px;
         }
 
         .header h1 {
@@ -51,8 +51,31 @@
 
         .header p {
             color: var(--text-muted);
-            margin: 0;
+            margin: 0 0 15px 0;
             font-size: 14px;
+        }
+
+        /* Navigations-Button zum Spielplan */
+        .nav-link-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(56, 189, 248, 0.1);
+            color: var(--primary);
+            border: 1px solid rgba(56, 189, 248, 0.3);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.2s;
+            margin-bottom: 10px;
+        }
+        
+        .nav-link-btn:hover {
+            background: rgba(56, 189, 248, 0.2);
+            border-color: var(--primary);
+            transform: translateY(-1px);
         }
 
         .date-section {
@@ -190,7 +213,6 @@
             cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; font-family: inherit;
         }
 
-        /* Lade-Anzeige Overlay */
         .loading-overlay {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(15, 23, 42, 0.7); border-radius: 16px;
@@ -208,6 +230,8 @@
     <div class="header">
         <h1>👑 Pimmelprinzen</h1>
         <p>Dart Club Scherpenberg &bull; Kaderplaner</p>
+        <!-- Button zum Spielplan -->
+        <a href="spielplan.html" class="nav-link-btn">📅 Zum 21-Wochen Spielplan</a>
     </div>
 
     <div class="date-section">
@@ -227,7 +251,6 @@
 </div>
 
 <script>
-    // Deine aktive Google Apps Script URL ist hier fest hinterlegt
     const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwNyDqSmLlQDNlZfoAa_xw-L4UikXEAVDQwA7c5xs7qKQ53Kjw3pCO6LXG7lpYB2THyKA/exec";
 
     const kader = ["MetalBoller", "Daszebra", "Günni", "HerrProfessor", "Pepe", "Libero", "Illie"];
@@ -246,7 +269,6 @@
     datumsInput.value = getNextThursday();
     datumsInput.addEventListener('change', render);
 
-    // Daten von Google Sheets laden
     function loadDataFromSheets() {
         showLoading(true);
         fetch(WEB_APP_URL)
@@ -320,7 +342,6 @@
 
         showLoading(true);
 
-        // An Google Sheets senden
         fetch(WEB_APP_URL, {
             method: "POST",
             mode: "no-cors",
