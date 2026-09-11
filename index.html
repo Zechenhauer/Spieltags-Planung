@@ -16,6 +16,7 @@
             --text-muted: #94a3b8;
             --success: #22c55e;
             --danger: #ef4444;
+            --gold: #f59e0b;
         }
 
         * { box-sizing: border-box; }
@@ -57,7 +58,10 @@
         }
 
         .nav-btn-container {
-            text-align: center;
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            flex-wrap: wrap;
             margin-bottom: 20px;
         }
         .btn-switch {
@@ -67,7 +71,7 @@
             background: rgba(56, 189, 248, 0.1);
             color: var(--accent);
             border: 1px solid var(--accent);
-            padding: 10px 20px;
+            padding: 10px 16px;
             border-radius: 20px;
             font-size: 13px;
             font-weight: 600;
@@ -77,6 +81,26 @@
         }
         .btn-switch:hover {
             background: rgba(56, 189, 248, 0.2);
+            transform: translateY(-1px);
+        }
+
+        .btn-kasse {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(245, 158, 11, 0.1);
+            color: var(--gold);
+            border: 1px solid var(--gold);
+            padding: 10px 16px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+        .btn-kasse:hover {
+            background: rgba(245, 158, 11, 0.2);
             transform: translateY(-1px);
         }
 
@@ -275,8 +299,11 @@
 
     <div class="nav-btn-container">
         <button class="btn-switch" id="viewSwitchBtn" onclick="toggleView()">
-            📅 Zum 21-Wochen Spielplan
+            📅 Zum Spielplan
         </button>
+        <a href="https://zechenhauer.github.io/scherpenberger_dartkasse/" class="btn-kasse">
+            💰 Mannschaftskasse
+        </a>
     </div>
 
     <!-- ANSICHT 1: ANMELDUNGEN -->
@@ -356,7 +383,25 @@
         { name: "Illie", css: "p-Illie" }
     ];
 
-    let currentSpieltagDate = new Date().toISOString().split('T')[0];
+    function getNextOrCurrentThursday() {
+        const now = new Date();
+        const d = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        const day = d.getDay(); // 0=So, 1=Mo, 2=Di, 3=Mi, 4=Do, 5=Fr, 6=Sa
+        
+        let diffToThursday = (day >= 4) ? (day - 4) : (7 + day - 4);
+        d.setDate(d.getDate() - diffToThursday);
+
+        if (day > 4 || day === 0) {
+            d.setDate(d.getDate() + 7);
+        }
+
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const dayOfMonth = String(d.getDate()).padStart(2, '0');
+        return `${year}-${month}-${dayOfMonth}`;
+    }
+
+    let currentSpieltagDate = getNextOrCurrentThursday();
     let attendanceMap = {};
     let activeView = "anmeldung";
     let activeWeek = 1;
@@ -393,7 +438,6 @@
     }
 
     async function fetchAttendanceFromSupabase() {
-        console._log_sup = "Lade Daten...";
         const { data, error } = await supabaseClient.from('pimmelprinzen_anmeldungen').select('*');
         if (error) {
             console.error("Fehler beim Laden:", error);
@@ -407,7 +451,6 @@
     }
 
     async function setStatus(playerName, status) {
-        console.log("Klick erkannt für:", playerName, status, "am Spieltag:", currentSpieltagDate);
         const key = `${currentSpieltagDate}_${playerName}`;
         attendanceMap[key] = status;
         renderAnmeldungView();
@@ -424,8 +467,6 @@
         if (error) {
             console.error("Supabase Speichern fehlgeschlagen:", error);
             alert("Fehler beim Speichern: " + error.message);
-        } else {
-            console.log("Erfolgreich in Supabase gespeichert!");
         }
     }
 
@@ -444,13 +485,13 @@
             activeView = "spielplan";
             viewAnm.classList.remove('active');
             viewSpl.classList.add('active');
-            btnSwitch.innerHTML = "📝 Zurück zur Spieler-Anmeldung";
+            btnSwitch.innerHTML = "📝 Zur Anmeldung";
             mainWrapper.style.maxWidth = "950px";
         } else {
             activeView = "anmeldung";
             viewSpl.classList.remove('active');
             viewAnm.classList.add('active');
-            btnSwitch.innerHTML = "📅 Zum 21-Wochen Spielplan";
+            btnSwitch.innerHTML = "📅 Zum Spielplan";
             mainWrapper.style.maxWidth = "550px";
         }
     }
