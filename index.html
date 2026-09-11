@@ -3,392 +3,555 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kaderplaner - Scherpenberger Pimmelprinzen</title>
+    <title>👑 Pimmelprinzen - Kaderplaner & Anmeldungen (Supabase Live)</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
             --bg-color: #0f172a;
             --card-bg: #1e293b;
-            --panel-bg: #111827;
-            --text-color: #e2e8f0;
+            --card-border: #334155;
+            --accent: #38bdf8;
+            --text-main: #f8fafc;
             --text-muted: #94a3b8;
-            --primary: #38bdf8;
+            --success: #22c55e;
+            --danger: #ef4444;
         }
+
+        * { box-sizing: border-box; }
 
         body {
             font-family: 'Inter', sans-serif;
             background-color: var(--bg-color);
-            color: var(--text-color);
+            color: var(--text-main);
             margin: 0;
-            padding: 30px 15px;
+            padding: 20px 15px;
             display: flex;
             justify-content: center;
         }
 
-        .app-container {
+        .container {
             width: 100%;
-            max-width: 500px;
+            max-width: 550px;
             background: var(--card-bg);
+            border: 1px solid var(--card-border);
             border-radius: 16px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
             padding: 25px;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4);
-            box-sizing: border-box;
-            position: relative;
         }
 
         .header {
             text-align: center;
             margin-bottom: 20px;
         }
-
         .header h1 {
-            color: #f8fafc;
-            font-size: 28px;
+            font-size: 26px;
+            color: var(--text-main);
             margin: 0 0 5px 0;
             font-weight: 700;
-            letter-spacing: -0.025em;
         }
-
         .header p {
             color: var(--text-muted);
-            margin: 0 0 15px 0;
+            margin: 0;
             font-size: 14px;
         }
 
-        /* Navigations-Button zum Spielplan */
-        .nav-link-btn {
+        .nav-btn-container {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .btn-switch {
             display: inline-flex;
             align-items: center;
-            justify-content: center;
+            gap: 8px;
             background: rgba(56, 189, 248, 0.1);
-            color: var(--primary);
-            border: 1px solid rgba(56, 189, 248, 0.3);
-            padding: 8px 16px;
+            color: var(--accent);
+            border: 1px solid var(--accent);
+            padding: 10px 20px;
             border-radius: 20px;
             font-size: 13px;
             font-weight: 600;
-            text-decoration: none;
+            cursor: pointer;
             transition: all 0.2s;
-            margin-bottom: 10px;
+            text-decoration: none;
         }
-        
-        .nav-link-btn:hover {
+        .btn-switch:hover {
             background: rgba(56, 189, 248, 0.2);
-            border-color: var(--primary);
             transform: translateY(-1px);
         }
 
-        .date-section {
-            background: var(--panel-bg);
-            padding: 15px;
+        .view-section { display: none; }
+        .view-section.active { display: block; }
+
+        .spieltag-box {
+            background: #111827;
+            border: 1px solid var(--card-border);
             border-radius: 12px;
+            padding: 15px;
             margin-bottom: 20px;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            border: 1px solid #334155;
         }
-
-        .date-section label {
-            font-weight: 600;
-            font-size: 14px;
-            color: var(--text-muted);
+        .spieltag-label {
+            font-size: 11px;
+            font-weight: 700;
             text-transform: uppercase;
+            color: var(--text-muted);
             letter-spacing: 0.05em;
         }
-
-        .date-section input[type="date"] {
+        .spieltag-date-input {
             background: #1f2937;
-            border: 2px solid #334155;
-            color: #f8fafc;
+            border: 1px solid var(--card-border);
+            color: var(--text-main);
             padding: 8px 12px;
             border-radius: 8px;
-            font-size: 14px;
             font-family: inherit;
-            outline: none;
-            cursor: pointer;
-        }
-
-        .stats-container {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 25px;
-        }
-
-        .stat-box {
-            flex: 1;
-            background: var(--panel-bg);
-            padding: 12px;
-            border-radius: 12px;
-            text-align: center;
-            border: 1px solid #334155;
-        }
-
-        .stat-box .num {
-            font-size: 24px;
-            font-weight: 700;
-            display: block;
-        }
-
-        .stat-box .lbl {
-            font-size: 11px;
-            color: var(--text-muted);
-            text-transform: uppercase;
+            font-size: 14px;
             font-weight: 600;
-            letter-spacing: 0.05em;
+            outline: none;
         }
 
-        .stat-ja .num { color: #66bb6a; }
-        .stat-nein .num { color: #ef5350; }
-        .stat-offen .num { color: #ffa726; }
-
-        .player-list {
-            display: flex;
-            flex-direction: column;
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
             gap: 12px;
+            margin-bottom: 20px;
+        }
+        .stat-card {
+            background: #111827;
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            padding: 15px 10px;
+            text-align: center;
+        }
+        .stat-num {
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--text-main);
+            margin-bottom: 4px;
+        }
+        .stat-label {
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            letter-spacing: 0.05em;
         }
 
         .player-card {
-            background: var(--panel-bg);
-            padding: 14px 16px;
+            background: #111827;
+            border: 1px solid var(--card-border);
             border-radius: 12px;
+            padding: 14px 18px;
+            margin-bottom: 12px;
             display: flex;
-            justify-content: space-between;
             align-items: center;
-            border: 1px solid #334155;
-            transition: all 0.2s;
+            justify-content: space-between;
         }
 
-        .player-card.status-ja { border-color: rgba(102, 187, 106, 0.4); background: rgba(102, 187, 106, 0.02); }
-        .player-card.status-nein { border-color: rgba(239, 83, 80, 0.4); background: rgba(239, 83, 80, 0.02); }
-        .player-card.status-unsicher { border-color: rgba(255, 167, 38, 0.4); background: rgba(255, 167, 38, 0.02); }
-
-        .p-badge {
-            padding: 6px 14px;
+        .player-info {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+        .player-name-badge {
+            display: inline-block;
+            padding: 5px 12px;
             border-radius: 6px;
             font-weight: 600;
-            font-size: 15px;
-            white-space: nowrap;
-            display: inline-block;
+            font-size: 14px;
+            width: fit-content;
         }
+        .player-status-text {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 8px;
+        }
+        .action-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            border: 1px solid var(--card-border);
+            background: #1f2937;
+            color: var(--text-muted);
+            font-weight: bold;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        .action-btn:hover { background: #374151; color: var(--text-main); }
         
+        .action-btn.active-yes { background: rgba(34, 197, 94, 0.2); border-color: var(--success); color: var(--success); }
+        .action-btn.active-maybe { background: rgba(234, 179, 8, 0.2); border-color: #eab308; color: #eab308; }
+        .action-btn.active-no { background: rgba(239, 68, 68, 0.2); border-color: var(--danger); color: var(--danger); }
+
+        .btn-whatsapp {
+            width: 100%;
+            background: var(--success);
+            color: #0f172a;
+            border: none;
+            padding: 14px;
+            border-radius: 10px;
+            font-weight: 700;
+            font-size: 15px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 20px;
+            font-family: inherit;
+        }
+        .btn-whatsapp:hover { background: #16a34a; }
+
         .p-MetalBoller { background-color: rgba(2, 136, 209, 0.15); color: #29b6f6; border: 1px solid #0288d1; }
+        .p-Daszebra { background-color: rgba(123, 31, 162, 0.15); color: #ba68c8; border: 1px solid #7b1fa2; }
         .p-Günni { background-color: rgba(56, 142, 60, 0.15); color: #66bb6a; border: 1px solid #388e3c; }
         .p-HerrProfessor { background-color: rgba(245, 124, 0, 0.15); color: #ffa726; border: 1px solid #f57c00; }
         .p-Pepe { background-color: rgba(211, 47, 47, 0.15); color: #ef5350; border: 1px solid #d32f2f; }
-        .p-Daszebra { background-color: rgba(123, 31, 162, 0.15); color: #ba68c8; border: 1px solid #7b1fa2; padding: }
         .p-Libero { background-color: rgba(0, 121, 107, 0.15); color: #26a69a; border: 1px solid #00796b; }
         .p-Illie { background-color: rgba(113, 113, 113, 0.15); color: #cfd8dc; border: 1px solid #757575; }
 
-        .player-status-text {
-            font-size: 11px;
-            color: var(--text-muted);
-            display: block;
-            margin-top: 5px;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
+        .matchday-widget {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 15px;
+            margin-bottom: 20px;
+            background: #111827;
+            padding: 15px;
+            border-radius: 12px;
+            border: 1px solid var(--card-border);
         }
-
-        .btn-group { display: flex; gap: 6px; }
-        .btn-group button {
-            width: 38px;
-            height: 38px;
-            border: 1px solid #334155;
+        .matchday-display { font-size: 18px; font-weight: 700; color: var(--accent); }
+        .btn {
+            background: var(--accent);
+            color: #0f172a;
+            border: none;
+            padding: 10px 16px;
             border-radius: 8px;
+            font-weight: 600;
+            font-size: 13px;
             cursor: pointer;
-            font-weight: bold;
-            font-size: 15px;
-            transition: all 0.15s;
-            background: #1f2937;
-            color: var(--text-muted);
+            font-family: inherit;
         }
+        .btn:hover { background: #7dd3fc; }
+        .btn-secondary { background: #334155; color: #f8fafc; }
+        .btn-secondary:hover { background: #475569; }
 
-        .btn-group button.active-ja { background-color: #2e7d32; color: white; border-color: #388e3c; }
-        .btn-group button.active-unsicher { background-color: #f57c00; color: white; border-color: #ffa726; }
-        .btn-group button.active-nein { background-color: #c62828; color: white; border-color: #ef5350; }
-
-        .export-btn {
-            width: 100%; background-color: #25D366; color: white; border: none; padding: 14px;
-            border-radius: 12px; font-weight: 600; font-size: 15px; margin-top: 25px;
-            cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; font-family: inherit;
+        .table-responsive {
+            overflow-x: auto;
+            border-radius: 10px;
+            border: 1px solid var(--card-border);
+            background: #111827;
         }
-
-        .loading-overlay {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(15, 23, 42, 0.7); border-radius: 16px;
-            display: flex; justify-content: center; align-items: center;
-            font-weight: 600; color: var(--primary); font-size: 18px;
-            z-index: 10; display: none;
-        }
+        table { width: 100%; border-collapse: collapse; text-align: left; font-size: 13px; }
+        th { background-color: #1f2937; color: var(--text-muted); font-weight: 600; padding: 12px 14px; border-bottom: 2px solid var(--card-border); text-transform: uppercase; font-size: 10px; }
+        td { padding: 12px 14px; border-bottom: 1px solid var(--card-border); vertical-align: middle; }
+        tr.active-row td { background-color: rgba(56, 189, 248, 0.08) !important; border-top: 1px solid var(--accent); border-bottom: 1px solid var(--accent); }
+        .woche-cell { font-weight: 700; color: var(--accent); text-align: center; width: 60px; }
+        .team-container { display: flex; align-items: center; gap: 6px; white-space: nowrap; }
+        .plus { color: var(--text-muted); font-weight: bold; }
+        .player-chip { padding: 3px 8px; border-radius: 6px; font-weight: 600; display: inline-block; font-size: 12px; }
     </style>
 </head>
 <body>
 
-<div class="app-container">
-    <div id="loading" class="loading-overlay">⏳ Synchronisiere Daten...</div>
-
+<div class="container" id="mainWrapper" style="max-width: 550px;">
     <div class="header">
         <h1>👑 Pimmelprinzen</h1>
         <p>Dart Club Scherpenberg &bull; Kaderplaner</p>
-        <!-- Button zum Spielplan -->
-        <a href="spielplan.html" class="nav-link-btn">📅 Zum 21-Wochen Spielplan</a>
     </div>
 
-    <div class="date-section">
-        <label for="spiel-datum">Spieltag</label>
-        <input type="date" id="spiel-datum">
+    <div class="nav-btn-container">
+        <button class="btn-switch" id="viewSwitchBtn" onclick="toggleView()">
+            📅 Zum 21-Wochen Spielplan
+        </button>
     </div>
 
-    <div class="stats-container">
-        <div class="stat-box stat-ja"><span class="num" id="count-ja">0</span><span class="lbl">Dabei</span></div>
-        <div class="stat-box stat-nein"><span class="num" id="count-nein">0</span><span class="lbl">Raus</span></div>
-        <div class="stat-box stat-offen"><span class="num" id="count-offen">0</span><span class="lbl">Offen</span></div>
+    <!-- ANSICHT 1: ANMELDUNGEN -->
+    <div id="viewAnmeldung" class="view-section active">
+        <div class="spieltag-box">
+            <div>
+                <div class="spieltag-label">Spieltag Datum</div>
+                <input type="date" id="spieltagDate" class="spieltag-date-input" onchange="saveDate()">
+            </div>
+            <div style="text-align: right;">
+                <div class="spieltag-label">Status</div>
+                <div style="font-size: 13px; font-weight: bold; color: var(--success); margin-top: 4px;">Live aktiv</div>
+            </div>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-num" id="statDabei" style="color: var(--success);">0</div>
+                <div class="stat-label">Dabei</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-num" id="statRaus" style="color: var(--danger);">0</div>
+                <div class="stat-label">Raus</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-num" id="statOffen" style="color: #eab308;">7</div>
+                <div class="stat-label">Offen</div>
+            </div>
+        </div>
+
+        <div id="playerCardList"></div>
+
+        <button class="btn-whatsapp" onclick="copyWhatsAppList()">
+            📋 Liste für WhatsApp kopieren
+        </button>
     </div>
 
-    <div class="player-list" id="player-list"></div>
+    <!-- ANSICHT 2: SPIELPLAN -->
+    <div id="viewSpielplan" class="view-section">
+        <div class="matchday-widget">
+            <button class="btn btn-secondary" onclick="changeWeek(-1)">&larr; Zurück</button>
+            <div class="matchday-display">Woche <span id="currentWeekDisplay">1</span> / 21</div>
+            <button class="btn" onclick="changeWeek(1)">Weiter &rarr;</button>
+        </div>
 
-    <button class="export-btn" onclick="exportToWhatsApp()">📋 Liste für WhatsApp kopieren</button>
+        <div class="table-responsive">
+            <table id="scheduleTable">
+                <thead>
+                    <tr>
+                        <th style="text-align: center;">Woche</th>
+                        <th>Aussetzer</th>
+                        <th>Team 1</th>
+                        <th>Team 2</th>
+                        <th>Team 3</th>
+                    </tr>
+                </thead>
+                <tbody id="scheduleTableBody">
+                    <tr><td colspan="5" style="text-align: center; padding: 20px;">Lade Spielplan...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
 </div>
 
 <script>
-    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxr8XTbtYEI3CLu0HURNqMaXM-ArYlhvHo9fyY7rqrTB5wY5YEJYkebgC3ZQ6SY-ZpIDQ/exec";
+    const SUPABASE_URL = 'https://lhusylpjnujlqomougmg.supabase.co';
+    const SUPABASE_ANON_KEY = 'sb_publishable_yXEueWILvAq-Vm2VfTuYyg_BIQeE1KK';
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    const kader = ["MetalBoller", "Günni", "HerrProfessor", "Pepe", "Daszebra", "Libero", "Illie"];
-    let datenbank = {};
-    const datumsInput = document.getElementById('spiel-datum');
+    const players = [
+        { name: "MetalBoller", css: "p-MetalBoller" },
+        { name: "Daszebra", css: "p-Daszebra" },
+        { name: "Günni", css: "p-Günni" },
+        { name: "HerrProfessor", css: "p-HerrProfessor" },
+        { name: "Pepe", css: "p-Pepe" },
+        { name: "Libero", css: "p-Libero" },
+        { name: "Illie", css: "p-Illie" }
+    ];
 
-    function getNextThursday() {
-        const today = new Date();
-        const resultDate = new Date(today.getTime());
-        const dayOfWeek = today.getDay();
-        let daysUntilThursday = (4 - dayOfWeek + 7) % 7;
-        resultDate.setDate(today.getDate() + daysUntilThursday);
-        return resultDate.toISOString().split('T')[0];
+    let currentSpieltagDate = new Date().toISOString().split('T')[0];
+    let attendanceMap = {};
+    let activeView = "anmeldung";
+    let activeWeek = 1;
+
+    const fallbackSchedule = [
+        { woche_nr: 1, aussetzer: "MetalBoller", team1_p1: "Daszebra", team1_p2: "Günni", team2_p1: "HerrProfessor", team2_p2: "Pepe", team3_p1: "Libero", team3_p2: "Illie" },
+        { woche_nr: 2, aussetzer: "Daszebra", team1_p1: "MetalBoller", team1_p2: "HerrProfessor", team2_p1: "Günni", team2_p2: "Libero", team3_p1: "Pepe", team3_p2: "Illie" },
+        { woche_nr: 3, aussetzer: "Günni", team1_p1: "MetalBoller", team1_p2: "Pepe", team2_p1: "Daszebra", team2_p2: "Illie", team3_p1: "HerrProfessor", team3_p2: "Libero" },
+        { woche_nr: 4, aussetzer: "HerrProfessor", team1_p1: "MetalBoller", team1_p2: "Libero", team2_p1: "Daszebra", team2_p2: "Pepe", team3_p1: "Günni", team3_p2: "Illie" },
+        { woche_nr: 5, aussetzer: "Pepe", team1_p1: "MetalBoller", team1_p2: "Illie", team2_p1: "Daszebra", team2_p2: "Libero", team3_p1: "Günni", team3_p2: "HerrProfessor" },
+        { woche_nr: 6, aussetzer: "Libero", team1_p1: "MetalBoller", team1_p2: "Daszebra", team2_p1: "Günni", team2_p2: "Pepe", team3_p1: "HerrProfessor", team3_p2: "Illie" },
+        { woche_nr: 7, aussetzer: "Illie", team1_p1: "MetalBoller", team1_p2: "Günni", team2_p1: "Daszebra", team2_p2: "HerrProfessor", team3_p1: "Pepe", team3_p2: "Libero" },
+        { woche_nr: 8, aussetzer: "MetalBoller", team1_p1: "Günni", team1_p2: "HerrProfessor", team2_p1: "Daszebra", team2_p2: "Illie", team3_p1: "Pepe", team3_p2: "Libero" },
+        { woche_nr: 9, aussetzer: "Daszebra", team1_p1: "Günni", team1_p2: "Illie", team2_p1: "HerrProfessor", team2_p2: "Libero", team3_p1: "MetalBoller", team3_p2: "Pepe" },
+        { woche_nr: 10, aussetzer: "Günni", team1_p1: "Daszebra", team1_p2: "Pepe", team2_p1: "MetalBoller", team2_p2: "Illie", team3_p1: "HerrProfessor", team3_p2: "Libero" },
+        { woche_nr: 11, aussetzer: "HerrProfessor", team1_p1: "MetalBoller", team1_p2: "Günni", team2_p1: "Daszebra", team2_p2: "Libero", team3_p1: "Pepe", team3_p2: "Illie" },
+        { woche_nr: 12, aussetzer: "Pepe", team1_p1: "Günni", team1_p2: "Libero", team2_p1: "MetalBoller", team2_p2: "Daszebra", team3_p1: "HerrProfessor", team3_p2: "Illie" },
+        { woche_nr: 13, aussetzer: "Libero", team1_p1: "MetalBoller", team1_p2: "HerrProfessor", team2_p1: "Günni", team2_p2: "Illie", team3_p1: "Daszebra", team3_p2: "Pepe" },
+        { woche_nr: 14, aussetzer: "Illie", team1_p1: "Daszebra", team1_p2: "HerrProfessor", team2_p1: "MetalBoller", team2_p2: "Libero", team3_p1: "Günni", team3_p2: "Pepe" },
+        { woche_nr: 15, aussetzer: "MetalBoller", team1_p1: "Daszebra", team1_p2: "Pepe", team2_p1: "Günni", team2_p2: "Illie", team3_p1: "HerrProfessor", team3_p2: "Libero" },
+        { woche_nr: 16, aussetzer: "Daszebra", team1_p1: "MetalBoller", team1_p2: "Illie", team2_p1: "Günni", team2_p2: "HerrProfessor", team3_p1: "Pepe", team3_p2: "Libero" },
+        { woche_nr: 17, aussetzer: "Günni", team1_p1: "MetalBoller", team1_p2: "Libero", team2_p1: "Daszebra", team2_p2: "Illie", team3_p1: "HerrProfessor", team3_p2: "Pepe" },
+        { woche_nr: 18, aussetzer: "HerrProfessor", team1_p1: "MetalBoller", team1_p2: "Pepe", team2_p1: "Günni", team2_p2: "Libero", team3_p1: "Daszebra", team3_p2: "Illie" },
+        { woche_nr: 19, aussetzer: "Pepe", team1_p1: "MetalBoller", team1_p2: "Günni", team2_p1: "Daszebra", team2_p2: "HerrProfessor", team3_p1: "Libero", team3_p2: "Illie" },
+        { woche_nr: 20, aussetzer: "Libero", team1_p1: "Daszebra", team1_p2: "Günni", team2_p1: "MetalBoller", team2_p2: "HerrProfessor", team3_p1: "Pepe", team3_p2: "Illie" },
+        { woche_nr: 21, aussetzer: "Illie", team1_p1: "MetalBoller", team1_p2: "Daszebra", team2_p1: "Günni", team2_p2: "Pepe", team3_p1: "HerrProfessor", team3_p2: "Libero" }
+    ];
+
+    async function initApp() {
+        document.getElementById('spieltagDate').value = currentSpieltagDate;
+        await fetchAttendanceFromSupabase();
+        renderAnmeldungView();
+        renderSpielplanView();
     }
 
-    datumsInput.value = getNextThursday();
-    datumsInput.addEventListener('change', render);
-
-    function loadDataFromSheets() {
-        showLoading(true);
-        fetch(WEB_APP_URL)
-            .then(response => response.json())
-            .then(data => {
-                datenbank = data;
-                render();
-                showLoading(false);
-            })
-            .catch(err => {
-                console.error("Fehler beim Laden:", err);
-                showLoading(false);
+    async function fetchAttendanceFromSupabase() {
+        console._log_sup = "Lade Daten...";
+        const { data, error } = await supabaseClient.from('pimmelprinzen_anmeldungen').select('*');
+        if (error) {
+            console.error("Fehler beim Laden:", error);
+        } else if (data) {
+            attendanceMap = {};
+            data.forEach(row => {
+                attendanceMap[`${row.spieltag}_${row.spieler}`] = row.status;
             });
-    }
-
-    function showLoading(show) {
-        document.getElementById('loading').style.display = show ? 'flex' : 'none';
-    }
-
-    function render() {
-        const gewähltesDatum = datumsInput.value;
-        const listContainer = document.getElementById('player-list');
-        listContainer.innerHTML = '';
-
-        if (!datenbank[gewähltesDatum]) {
-            datenbank[gewähltesDatum] = {};
+            renderAnmeldungView();
         }
+    }
 
-        let countJa = 0, countNein = 0, countOffen = 0;
+    async function setStatus(playerName, status) {
+        console.log("Klick erkannt für:", playerName, status, "am Spieltag:", currentSpieltagDate);
+        const key = `${currentSpieltagDate}_${playerName}`;
+        attendanceMap[key] = status;
+        renderAnmeldungView();
 
-        kader.forEach(spieler => {
-            const status = datenbank[gewähltesDatum][spieler] || 'offen';
-            
-            if (status === 'ja') countJa++;
-            else if (status === 'nein') countNein++;
+        const { error } = await supabaseClient
+            .from('pimmelprinzen_anmeldungen')
+            .upsert({
+                spieltag: currentSpieltagDate,
+                spieler: playerName,
+                status: status,
+                updated_at: new Date()
+            }, { onConflict: 'spieltag,spieler' });
+
+        if (error) {
+            console.error("Supabase Speichern fehlgeschlagen:", error);
+            alert("Fehler beim Speichern: " + error.message);
+        } else {
+            console.log("Erfolgreich in Supabase gespeichert!");
+        }
+    }
+
+    function saveDate() {
+        currentSpieltagDate = document.getElementById('spieltagDate').value;
+        renderAnmeldungView();
+    }
+
+    function toggleView() {
+        const mainWrapper = document.getElementById('mainWrapper');
+        const viewAnm = document.getElementById('viewAnmeldung');
+        const viewSpl = document.getElementById('viewSpielplan');
+        const btnSwitch = document.getElementById('viewSwitchBtn');
+
+        if (activeView === "anmeldung") {
+            activeView = "spielplan";
+            viewAnm.classList.remove('active');
+            viewSpl.classList.add('active');
+            btnSwitch.innerHTML = "📝 Zurück zur Spieler-Anmeldung";
+            mainWrapper.style.maxWidth = "950px";
+        } else {
+            activeView = "anmeldung";
+            viewSpl.classList.remove('active');
+            viewAnm.classList.add('active');
+            btnSwitch.innerHTML = "📅 Zum 21-Wochen Spielplan";
+            mainWrapper.style.maxWidth = "550px";
+        }
+    }
+
+    function renderAnmeldungView() {
+        const container = document.getElementById('playerCardList');
+        container.innerHTML = '';
+
+        let countDabei = 0;
+        let countRaus = 0;
+        let countOffen = 0;
+
+        players.forEach(p => {
+            const key = `${currentSpieltagDate}_${p.name}`;
+            const status = attendanceMap[key] || "open";
+
+            if (status === "yes") countDabei++;
+            else if (status === "no") countRaus++;
             else countOffen++;
 
-            let statusText = "noch offen";
-            if(status === 'ja') statusText = "🟢 Am Board";
-            if(status === 'nein') statusText = "🔴 Abgemeldet";
-            if(status === 'unsicher') statusText = "🟡 Unsicher";
+            let statusText = "Noch offen";
+            if (status === "yes") statusText = "Dabei ✅";
+            else if (status === "no") statusText = "Abgesagt ❌";
+            else if (status === "maybe") statusText = "Vielleicht ❓";
 
             const card = document.createElement('div');
-            card.className = `player-card status-${status}`;
+            card.className = 'player-card';
             card.innerHTML = `
-                <div>
-                    <span class="p-badge p-${spieler}">${spieler}</span>
+                <div class="player-info">
+                    <span class="player-name-badge ${p.css}">${p.name}</span>
                     <span class="player-status-text">${statusText}</span>
                 </div>
-                <div class="btn-group">
-                    <button class="${status === 'ja' ? 'active-ja' : ''}" onclick="setStatus('${spieler}', 'ja')">✓</button>
-                    <button class="${status === 'unsicher' ? 'active-unsicher' : ''}" onclick="setStatus('${spieler}', 'unsicher')">?</button>
-                    <button class="${status === 'nein' ? 'active-nein' : ''}" onclick="setStatus('${spieler}', 'nein')">✗</button>
+                <div class="action-buttons">
+                    <button class="action-btn ${status === 'yes' ? 'active-yes' : ''}" onclick="setStatus('${p.name}', 'yes')">✓</button>
+                    <button class="action-btn ${status === 'maybe' ? 'active-maybe' : ''}" onclick="setStatus('${p.name}', 'maybe')">?</button>
+                    <button class="action-btn ${status === 'no' ? 'active-no' : ''}" onclick="setStatus('${p.name}', 'no')">✕</button>
                 </div>
             `;
-            listContainer.appendChild(card);
+            container.appendChild(card);
         });
 
-        document.getElementById('count-ja').innerText = countJa;
-        document.getElementById('count-nein').innerText = countNein;
-        document.getElementById('count-offen').innerText = countOffen;
+        document.getElementById('statDabei').textContent = countDabei;
+        document.getElementById('statRaus').textContent = countRaus;
+        document.getElementById('statOffen').textContent = countOffen;
     }
 
-    function setStatus(spielerName, statusWert) {
-        const gewähltesDatum = datumsInput.value;
-        let neuerStatus = statusWert;
-        
-        if (datenbank[gewähltesDatum] && datenbank[gewähltesDatum][spielerName] === statusWert) {
-            neuerStatus = 'offen';
-        }
+    function renderSpielplanView() {
+        document.getElementById('currentWeekDisplay').textContent = activeWeek;
+        const tbody = document.getElementById('scheduleTableBody');
+        tbody.innerHTML = '';
 
-        showLoading(true);
+        fallbackSchedule.forEach(row => {
+            const tr = document.createElement('tr');
+            if (row.woche_nr === activeWeek) tr.className = "active-row";
 
-        fetch(WEB_APP_URL, {
-            method: "POST",
-            mode: "no-cors",
-            cache: "no-cache",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                datum: gewähltesDatum,
-                spieler: spielerName,
-                status: neuerStatus
-            })
-        }).then(() => {
-            if (!datenbank[gewähltesDatum]) datenbank[gewähltesDatum] = {};
-            datenbank[gewähltesDatum][spielerName] = neuerStatus;
-            render();
-            showLoading(false);
-        }).catch(err => {
-            alert("Fehler beim Speichern!");
-            showLoading(false);
+            tr.innerHTML = `
+                <td class="woche-cell">${row.woche_nr}</td>
+                <td><span class="player-chip ${getChipClass(row.aussetzer)}">${row.aussetzer}</span></td>
+                <td><div class="team-container"><span class="player-chip ${getChipClass(row.team1_p1)}">${row.team1_p1}</span><span class="plus">+</span><span class="player-chip ${getChipClass(row.team1_p2)}">${row.team1_p2}</span></div></td>
+                <td><div class="team-container"><span class="player-chip ${getChipClass(row.team2_p1)}">${row.team2_p1}</span><span class="plus">+</span><span class="player-chip ${getChipClass(row.team2_p2)}">${row.team2_p2}</span></div></td>
+                <td><div class="team-container"><span class="player-chip ${getChipClass(row.team3_p1)}">${row.team3_p1}</span><span class="plus">+</span><span class="player-chip ${getChipClass(row.team3_p2)}">${row.team3_p2}</span></div></td>
+            `;
+            tbody.appendChild(tr);
         });
     }
 
-    function exportToWhatsApp() {
-        const gewähltesDatum = datumsInput.value;
-        const d = gewähltesDatum.split('-');
-        const formatiertesDatum = `${d[2]}.${d[1]}.${d[0]}`;
+    function getChipClass(name) {
+        const found = players.find(p => p.name === name);
+        return found ? found.css : 'p-Illie';
+    }
 
-        let text = `🎯 *Kader Pimmelprinzen (${formatiertesDatum})*\n\n`;
-        let jaListe = [], neinListe = [], offenListe = [];
+    function changeWeek(dir) {
+        activeWeek += dir;
+        if (activeWeek < 1) activeWeek = 21;
+        if (activeWeek > 21) activeWeek = 1;
+        renderSpielplanView();
+    }
 
-        kader.forEach(spieler => {
-            const status = datenbank[gewähltesDatum][spieler] || 'offen';
-            if(status === 'ja') jaListe.push(`🟢 ${spieler}`);
-            else if(status === 'nein') neinListe.push(`🔴 ${spieler}`);
-            else if(status === 'unsicher') offenListe.push(`🟡 ${spieler} (unsicher)`);
-            else offenListe.push(`⚪ ${spieler}`);
+    function copyWhatsAppList() {
+        let text = `🎯 *Pimmelprinzen Spieltag am ${currentSpieltagDate}* 🎯\n\n`;
+        let dabei = [];
+        let raus = [];
+        let offen = [];
+
+        players.forEach(p => {
+            const status = attendanceMap[`${currentSpieltagDate}_${p.name}`] || "open";
+            if (status === "yes") dabei.push(p.name);
+            else if (status === "no") raus.push(p.name);
+            else offen.push(p.name);
         });
 
-        text += `*Zusagen (${jaListe.length}):*\n${jaListe.length ? jaListe.join('\n') : 'Keine'}\n\n`;
-        text += `*Absagen (${neinListe.length}):*\n${neinListe.length ? neinListe.join('\n') : 'Keine'}\n\n`;
-        text += `*Offen (${offenListe.length}):*\n${offenListe.length ? offenListe.join('\n') : 'Keine'}`;
+        text += `✅ *Dabei (${dabei.length}):*\n` + (dabei.length ? dabei.join(", ") : "-") + `\n\n`;
+        text += `❌ *Raus (${raus.length}):*\n` + (raus.length ? raus.join(", ") : "-") + `\n\n`;
+        text += `⏳ *Offen (${offen.length}):*\n` + (offen.length ? offen.join(", ") : "-");
 
         navigator.clipboard.writeText(text).then(() => {
-            alert("In Zwischenablage kopiert!");
+            alert("WhatsApp-Liste in die Zwischenablage kopiert!");
         });
     }
 
-    loadDataFromSheets();
+    window.onload = initApp;
 </script>
 </body>
 </html>
