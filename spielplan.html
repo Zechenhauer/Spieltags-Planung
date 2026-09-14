@@ -366,22 +366,23 @@
         { name: "Illie", css: "p-Illie" }
     ];
 
-    // Exakte Berechnung des nächsten Donnerstags ausgehend vom aktuellen Systemdatum
+    // Zuverlässige lokale Berechnung des nächsten Donnerstags (ohne UTC-Verschiebungs-Bug)
     function getNextThursday() {
         const d = new Date();
-        const day = d.getDay(); // 0 = Sonntag, 1 = Montag, ..., 4 = Donnerstag, ...
-        // Berechnet die Differenz zum nächsten Donnerstag (Tag 4)
+        const day = d.getDay(); // 0 = Sonntag, 1 = Montag, ..., 4 = Donnerstag, etc.
+        
+        // Berechne Tage bis zum nächsten Donnerstag (4)
         let diff = 4 - day;
         if (diff < 0) {
-            // Wenn der Donnerstag diese Woche schon vorbei ist, nimm den Donnerstag nächstes Mal
-            diff += 7;
+            diff += 7; // Wenn Donnerstag diese Woche schon vorbei ist, nimm den nächsten
         }
         d.setDate(d.getDate() + diff);
-        
-        // Formatieren als YYYY-MM-DD unter Berücksichtigung der lokalen Zeitzone
+
+        // Lokales Datum im Format YYYY-MM-DD zusammensetzen (verhindert den 10.09.-Bug)
         const year = d.getFullYear();
         const month = String(d.getMonth() + 1).padStart(2, '0');
         const dayOfMonth = String(d.getDate()).padStart(2, '0');
+        
         return `${year}-${month}-${dayOfMonth}`;
     }
 
