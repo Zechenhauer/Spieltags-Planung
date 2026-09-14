@@ -80,11 +80,9 @@
             transform: translateY(-1px);
         }
 
-        /* Ansichten Steuerung */
         .view-section { display: none; }
         .view-section.active { display: block; }
 
-        /* Anmelde-Ansicht spezifisch */
         .spieltag-box {
             background: #111827;
             border: 1px solid var(--card-border);
@@ -219,7 +217,6 @@
         }
         .btn-whatsapp:hover { background: #16a34a; }
 
-        /* Spieler Farbdefinitionen */
         .p-MetalBoller { background-color: rgba(2, 136, 209, 0.15); color: #29b6f6; border: 1px solid #0288d1; }
         .p-Daszebra { background-color: rgba(123, 31, 162, 0.15); color: #ba68c8; border: 1px solid #7b1fa2; }
         .p-Günni { background-color: rgba(56, 142, 60, 0.15); color: #66bb6a; border: 1px solid #388e3c; }
@@ -228,7 +225,6 @@
         .p-Libero { background-color: rgba(0, 121, 107, 0.15); color: #26a69a; border: 1px solid #00796b; }
         .p-Illie { background-color: rgba(113, 113, 113, 0.15); color: #cfd8dc; border: 1px solid #757575; }
 
-        /* 21-Wochen Spielplan Ansicht Styles */
         .spielplan-container { max-width: 900px; margin: 0 auto; }
         .matchday-widget {
             display: flex;
@@ -370,13 +366,23 @@
         { name: "Illie", css: "p-Illie" }
     ];
 
-    // Funktion, die immer den nächsten Donnerstag (oder den heutigen Tag, falls es Donnerstag ist) berechnet
+    // Exakte Berechnung des nächsten Donnerstags ausgehend vom aktuellen Systemdatum
     function getNextThursday() {
         const d = new Date();
-        const day = d.getDay(); // 0 = Sonntag, 4 = Donnerstag, etc.
-        const diff = (4 - day + 7) % 7; 
+        const day = d.getDay(); // 0 = Sonntag, 1 = Montag, ..., 4 = Donnerstag, ...
+        // Berechnet die Differenz zum nächsten Donnerstag (Tag 4)
+        let diff = 4 - day;
+        if (diff < 0) {
+            // Wenn der Donnerstag diese Woche schon vorbei ist, nimm den Donnerstag nächstes Mal
+            diff += 7;
+        }
         d.setDate(d.getDate() + diff);
-        return d.toISOString().split('T')[0];
+        
+        // Formatieren als YYYY-MM-DD unter Berücksichtigung der lokalen Zeitzone
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const dayOfMonth = String(d.getDate()).padStart(2, '0');
+        return `${year}-${month}-${dayOfMonth}`;
     }
 
     let currentSpieltagDate = getNextThursday();
