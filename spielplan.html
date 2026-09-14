@@ -291,12 +291,12 @@
     <div id="viewAnmeldung" class="view-section active">
         <div class="spieltag-box">
             <div>
-                <div class="spieltag-label">Spieltag Datum</div>
+                <div class="spieltag-label">Spieltag Datum (Hier anpassbar)</div>
                 <input type="date" id="spieltagDate" class="spieltag-date-input" onchange="saveDate()">
             </div>
             <div style="text-align: right;">
-                <div class="spieltag-label">Woche im Plan</div>
-                <div id="linkedWeekBadge" style="font-size: 14px; font-weight: bold; color: var(--accent); margin-top: 4px;">Woche 1</div>
+                <div class="spieltag-label">Status</div>
+                <div id="syncStatusBadge" style="font-size: 12px; font-weight: bold; color: var(--success); margin-top: 4px;">● Verbunden</div>
             </div>
         </div>
 
@@ -366,27 +366,7 @@
         { name: "Illie", css: "p-Illie" }
     ];
 
-    // Zuverlässige lokale Berechnung des nächsten Donnerstags (ohne UTC-Verschiebungs-Bug)
-    function getNextThursday() {
-        const d = new Date();
-        const day = d.getDay(); // 0 = Sonntag, 1 = Montag, ..., 4 = Donnerstag, etc.
-        
-        // Berechne Tage bis zum nächsten Donnerstag (4)
-        let diff = 4 - day;
-        if (diff < 0) {
-            diff += 7; // Wenn Donnerstag diese Woche schon vorbei ist, nimm den nächsten
-        }
-        d.setDate(d.getDate() + diff);
-
-        // Lokales Datum im Format YYYY-MM-DD zusammensetzen (verhindert den 10.09.-Bug)
-        const year = d.getFullYear();
-        const month = String(d.getMonth() + 1).padStart(2, '0');
-        const dayOfMonth = String(d.getDate()).padStart(2, '0');
-        
-        return `${year}-${month}-${dayOfMonth}`;
-    }
-
-    let currentSpieltagDate = getNextThursday();
+    let currentSpieltagDate = "2026-09-17"; // Fallback Standard
     let attendanceMap = {}; 
     let activeView = "anmeldung";
     let activeWeek = 1;
@@ -417,12 +397,30 @@
     ];
 
     async function initApp() {
-        document.getElementById('spieltagDate').value = currentSpieltagDate;
         scheduleData = fallbackSchedule;
-        
+        await loadConfigFromSupabase();
         await fetchAttendanceFromSupabase();
+        
+        document.getElementById('spieltagDate').value = currentSpieltagDate;
         renderAnmeldungView();
         renderSpielplanView();
+    }
+
+    // Lädt das zentral in Supabase gespeicherte Datum
+    async function loadConfigFromSupabase() {
+        try {
+            const { data, error } = await supabaseClient
+                .from('pimmelprinzen_config')
+                .select('aktives_datum')
+                .eq('id', 1)
+                .single();
+
+            if (data && data.aktives_datum) {
+                currentSpieltagDate = data.aktives_datum;
+            }
+        } catch (err) {
+            console.log("Verwende Standard-Datum.");
+        }
     }
 
     async function fetchAttendanceFromSupabase() {
@@ -462,9 +460,27 @@
         }
     }
 
-    function saveDate() {
-        currentSpieltagDate = document.getElementById('spieltagDate').value;
+    // Wenn du das Datum in der App änderst, wird es direkt in Supabase für alle gespeichert!
+    async function saveDate() {
+        const newDate = document.getElementById('spieltagDate').value;
+        if (!newDate) return;
+        currentSpieltagDate = newDate;
         renderAnmeldungView();
+
+        try {
+            await supabaseClient
+                .from('pimmelprinzen_config')
+                .upsert({
+                    id: 1,
+                    aktives_datum: newDate
+                });
+            
+            const badge = document.getElementById('syncStatusBadge');
+            badge.textContent = "● Datum gespeichert!";
+            setTimeout(() => { badge.textContent = "● Verbunden"; }, 2000);
+        } catch (err) {
+            console.error("Fehler beim Speichern des Datums:", err);
+        }
     }
 
     function toggleView() {
