@@ -219,7 +219,7 @@
         }
         .btn-whatsapp:hover { background: #16a34a; }
 
-        /* Spieler Farbdefinitionen (wie in deiner App) */
+        /* Spieler Farbdefinitionen */
         .p-MetalBoller { background-color: rgba(2, 136, 209, 0.15); color: #29b6f6; border: 1px solid #0288d1; }
         .p-Daszebra { background-color: rgba(123, 31, 162, 0.15); color: #ba68c8; border: 1px solid #7b1fa2; }
         .p-Günni { background-color: rgba(56, 142, 60, 0.15); color: #66bb6a; border: 1px solid #388e3c; }
@@ -291,7 +291,7 @@
         </button>
     </div>
 
-    <!-- ANSICHT 1: ANMELDUNGEN (SCREENSHOT STYLE) -->
+    <!-- ANSICHT 1: ANMELDUNGEN -->
     <div id="viewAnmeldung" class="view-section active">
         <div class="spieltag-box">
             <div>
@@ -370,13 +370,21 @@
         { name: "Illie", css: "p-Illie" }
     ];
 
-    let currentSpieltagDate = new Date().toISOString().split('T')[0];
-    let attendanceMap = {}; // "2026-09-17_MetalBoller" -> "yes" / "maybe" / "no" / "open"
+    // Funktion, die immer den nächsten Donnerstag (oder den heutigen Tag, falls es Donnerstag ist) berechnet
+    function getNextThursday() {
+        const d = new Date();
+        const day = d.getDay(); // 0 = Sonntag, 4 = Donnerstag, etc.
+        const diff = (4 - day + 7) % 7; 
+        d.setDate(d.getDate() + diff);
+        return d.toISOString().split('T')[0];
+    }
+
+    let currentSpieltagDate = getNextThursday();
+    let attendanceMap = {}; 
     let activeView = "anmeldung";
     let activeWeek = 1;
     let scheduleData = [];
 
-    // Fester 21-Wochen-Spielplan
     const fallbackSchedule = [
         { woche_nr: 1, aussetzer: "MetalBoller", team1_p1: "Daszebra", team1_p2: "Günni", team2_p1: "HerrProfessor", team2_p2: "Pepe", team3_p1: "Libero", team3_p2: "Illie" },
         { woche_nr: 2, aussetzer: "Daszebra", team1_p1: "MetalBoller", team1_p2: "HerrProfessor", team2_p1: "Günni", team2_p2: "Libero", team3_p1: "Pepe", team3_p2: "Illie" },
